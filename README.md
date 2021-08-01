@@ -25,9 +25,9 @@ python3 Cnnvd_moniter.py
 
 ### 效果展示
 
-![image-20210801192804288](https://wiki-oss.s3.cn-north-1.jdcloud-oss.com/2021/08/cf73c03727a380a6b40361635127aa19.png)
+![](doc/1.png)
 
 点击卡片会跳转到Web表单展示页面，如下：
 
-![image-20210801193139417](https://wiki-oss.s3.cn-north-1.jdcloud-oss.com/2021/08/cce704325512616a896e89e844cb9779.png)
+![](doc/2.png)
 
