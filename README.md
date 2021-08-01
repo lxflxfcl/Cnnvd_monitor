@@ -3,6 +3,8 @@
 
 基于Python爬虫的CNNVD漏洞信息监控脚本——Cnnvd_monitor，实现了对CNNVD官网平台的实时监控、数据获取、入库、并用微信进行实时推送、并将获取的数据进行Web端表格展示。
 
+感谢嘉隆师傅对代码进行完善修改。撒花。
+
 每五个小时检测一次，网站是否更新。
 
 ### 使用说明
@@ -31,3 +33,12 @@ python3 Cnnvd_moniter.py
 
 ![](doc/2.png)
 
+### 参考文章
+
+https://blog.csdn.net/weixin_43345082/article/details/96475950
+
+https://github.com/yhy0/github-cve-monitor
+
+https://cloud.tencent.com/developer/article/1621016
+
+搜索引擎（debug）
