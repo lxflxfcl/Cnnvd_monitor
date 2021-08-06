@@ -152,26 +152,30 @@ def getURLDATA(url):
     return one_cve_info
 
 
-def wechat_qiye(today_time,filename):
-
+#企业微信消息推送
+def wechat_qiye(lever_test):
+    #文件下载服务器url
+    #url = "http://www.xf*****b.cn/" + filename
     global access_token
+    # 自定义应用的 Secret
+    Secret = "pyUtd3RYDs**************BY5YYHjAWKjUEpNiQ"
+    # 注册的企业 corpid
+    corpid = 'wwbfd**********1708'
+    url = 'https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid={}&corpsecret={}'
+
     '''
-        先提供Secret以及corpid获取access_token，按理来说只需要获取一次
+        先提供Secret以及corpid获取access_token。
     '''
     if access_token == '':
-        # 自定义应用的 Secret
-        Secret = "pyUtd3RYDsjbN3*************YHjAWKjUEpNiQ"
-        # 注册的企业 corpid
-        corpid = 'wwbfd9*********1708'
-        url = 'https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid={}&corpsecret={}'
+
         getr = requests.get(url=url.format(corpid, Secret))
         access_token = getr.json().get('access_token')
 
 
-    #print(access_token)
+    print(access_token)
     data = {
         # "chatid" : "xxx",
-        # "touser" : "ZhangSan",   # 向这些用户账户发送
+        # "touser" : "Test",   # 向这些用户账户发送
         "toparty": "1",  # 向群聊部门发送
         # "msgtype" : "text",
         "agentid": 1000001,  # 应用的 id 号
@@ -181,14 +185,25 @@ def wechat_qiye(today_time,filename):
         "msgtype": "textcard",
         "textcard": {
             "title": "今天的CVE到啦",
-            "description": "<div class=\"gray\">"+str(datetime.datetime.now().year)+"年"+str(datetime.datetime.now().month)+"月"+str(datetime.datetime.now().day)+"日</div> <div class=\"normal\"> CVE的详细的内容请点击\"获取最新CNNVD的文件\"</div><div class=\"highlight\">请注意查收，嘿嘿嘿</div>",
-            "url": "http://www.********.cn/"+str(datetime.datetime.now().date())+".html",
+            "description": "<div class=\"gray\">"+str(datetime.datetime.now().year)+"年"+str(datetime.datetime.now().month)+"月"+str(datetime.datetime.now().day)+"日</div> <div class=\"normal\">最新CNNVD漏洞情报</div><div class=\"highlight\">"+lever_test+"</div><div class=\"highlight\">请注意查收，嘿嘿嘿</div>",
+            "url": "http://www.x*******b.cn/"+str(datetime.datetime.now().date())+".html",
             "btntxt": "获取最新CNNVD的文件"
         },
         "safe": 0
     }
+
     r = requests.post(url="https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={}".format(access_token),
-                      data=json.dumps(data))
+                          data=json.dumps(data))
+    print(r.text)
+    if str(json.loads(r.text)['errcode']) == '42001':
+        #获取新的access_token
+        getr = requests.get(url=url.format(corpid, Secret))
+        access_token = getr.json().get('access_token')
+        #恢复之前因token过期异常失去的请求
+        r = requests.post(url="https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={}".format(access_token),
+                          data=json.dumps(data))
+        print(r.text)
+
 
 def slack_messge():
     pass
@@ -228,6 +243,7 @@ def is_not_exist(one_info):
     try:
         cursor.execute(sql,(str(one_info[2]),))
         info = cursor.fetchone()
+        #print(info)
         if info == None:
             insert_msg = "[*]有最新CNNVD编号漏洞:" + one_info[2]
             print(insert_msg)
@@ -260,6 +276,26 @@ def is_database_empty():
     except Exception as e:
         print(e)
 
+#查询漏洞信息危害级别
+def danger_level_nums():
+    cursor,con = conn_db()
+    #sql = "select danger_level, count(*) from cve_info  where  danger_level='中危'"
+    if datetime.datetime.now().weekday() + 1 == 5:
+
+        sql = "SELECT  danger_level,count(*)  from cve_info where updated_time > datetime('now','-7 days') group by danger_level having count(*)>1"
+        #sql1 = "select * from cve_info where [updated_time]>= updated_time('now', 'localtime',  'start of day')"
+        try:
+            cursor.execute(sql)
+            info1 = cursor.fetchall()
+            today = datetime.datetime.now().weekday() + 1
+            print(today)
+            return str(info1)
+
+        except Exception as e:
+            print(e)
+    else:
+
+        return  "今天记得查看哦"
 
 #excel文件的初始化创建
 def sheet_init(f):
@@ -331,7 +367,6 @@ def list_diction_to_html(list_work):
 #保存HTML文件
 def save_dom_to_html(dom):
     today_time = datetime.datetime.now().date()
-    aa = time.time()
     filepath = os.path.abspath('/usr/share/nginx/html/download/'+str(today_time)+".html")
     print(filepath)
     htmfile = open(filepath, "w",encoding='utf-8')
@@ -360,6 +395,9 @@ def main():
             send_msg_flag = False #该标志用于控制是否需要向微信推送消息
             if is_database_empty():
                 flag = True
+            #print(danger_level_nums()[0])
+            #print(danger_level_nums()[1])
+            #quit(0)
             #该while循环是
             while True:
                 url = 'http://www.cnnvd.org.cn/web/vulnerability/querylist.tag?pageno=' + str(pageNo) + '&repairLd='
@@ -381,6 +419,7 @@ def main():
                                 sheet1.write(excel_row, i - 1 , one[i - 1])
                             excel_row = excel_row + 1
                             insertTo(values)
+                           # print(values)
                            # pageNo = pageNo + 1
                             send_msg_flag = True
                         else:
@@ -391,7 +430,6 @@ def main():
                         print("http://www.cnnvd.org.cn" + k)
                         break
                 if flag:
-                    aa = time.time()
                     f.save(stream)  # 保存数据到内存中
                     value = stream.getvalue() #从内存中取出数据
                     file.write(value) #将数据写入硬盘中的文件
@@ -410,9 +448,11 @@ def main():
                     if send_msg_flag:
                         # server(str(datetime.datetime.now().date())+"的最新CNNVD信息推送：","EXCEL文件下载位置")
 			            #推送微信
-                        wechat_qiye(today_time,fileName)
+                        lever_test = str(danger_level_nums())
+                        print(lever_test)
+                        wechat_qiye(lever_test)
                         send_msg_flag = False
-                    time.sleep(60 * 60 * 5) #设置定时,每五小时查看查看一次
+                    time.sleep(60 * 60 * 8) #设置定时,每八小时查看查看一次
                     pageNo = 1 #重置页数
                     flag = False
                     break #跳出内层While
@@ -427,3 +467,5 @@ def main():
 
 if __name__ == "__main__":
     main()#程序入口
+
+
