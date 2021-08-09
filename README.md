@@ -22,11 +22,58 @@
 
 ## 使用说明
 
+### 前期准备
+
+- 开发语言：python3
+
+- 一台服务器(脚本跑在服务器上)
+
+- 一个域名(可选)
+
 首先进行数据库初始化，初始化时生成log文件夹用来存放生成的日志文件。命令如下：
 
 ```
 python3 installDb.py
 ```
+
+### 环境搭建
+
+因为要做Web端表格展示，所以这里**使用Nginx做了目录浏览**。服务器系统使用的是CentOS7，过程如下。
+
+首先使用yum源下载nginx，命令如下：
+
+```
+yum install -y nginx
+```
+
+装好后，查看版本，检查是否安装成功，如下图：
+
+![](doc/4.png)
+
+然后找到nginx的配置文件，具体位置为：
+
+```
+cd /etc/nginx/
+```
+
+找到nginx.conf文件，对其中的server板块进行修改就可以了，**主要是添加了末尾三行**。
+
+    server {
+        listen       80;
+        listen       [::]:80;
+        server_name  _;
+       # root         /usr/share/nginx/html;
+        charset utf-8;
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+        location / {
+                root /usr/share/nginx/html/download;
+        autoindex on; #开启索引功能
+        autoindex_exact_size off; #关闭计算文件确切大小(bytes)
+        autoindex_localtime on; #显示本机时间
+    }
+
+注意生成文件位置，我这里是`/usr/share/nginx/html/download` ，看个人爱好。
 
 ### 配置企业微信推送
 
